@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Juno PM · Provisioning signals</title>
+  <style>
+    :root { --ink:#172533; --muted:#647383; --line:#e2e8ee; --paper:#f5f7f9; --white:#fff; --blue:#0873c9; --pale:#eaf4fc; --green:#147d64; --amber:#b86a12; --red:#b94747; }
+    * { box-sizing:border-box }
+    body { margin:0; background:var(--paper); color:var(--ink); font:14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif }
+    button, input { font:inherit }
+    .topbar { height:58px; background:#fff; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:20px; padding:0 30px }
+    .brand { font-weight:750; font-size:17px; letter-spacing:-.4px; white-space:nowrap }
+    .brand b { color:var(--blue) }
+    .product { color:var(--muted); border-left:1px solid var(--line); padding-left:18px }
+    .spacer { flex:1 }
+    .workspace { color:#506071; font-size:12px }
+    .avatar { width:30px;height:30px;border-radius:50%;background:#d8e9f5;color:#285b7d;display:grid;place-items:center;font-size:11px;font-weight:700 }
+    .layout { display:grid;grid-template-columns:220px minmax(500px,1fr);max-width:1440px;margin:auto;min-height:calc(100vh - 58px) }
+    .layout > aside { padding:24px 14px;border-right:1px solid var(--line);background:#fbfcfd }
+    .navlabel { text-transform:uppercase;letter-spacing:.08em;color:#8995a1;font-size:10px;font-weight:700;padding:12px 12px 7px }
+    .nav { display:flex;gap:11px;align-items:center;padding:10px 12px;margin:2px 0;border-radius:7px;color:#536272;font-size:13px }
+    .nav.active { color:#075e9f;background:#eaf4fc;font-weight:650 }
+    .nav .icon { width:17px;text-align:center;color:#758392 }
+    .sourcebox { margin:32px 7px 0;padding:12px;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:11px;color:var(--muted) }
+    .sourcebox strong { display:block;color:var(--ink);font-size:12px;margin-bottom:5px }
+    main { padding:27px 34px 50px;min-width:0 }
+    .crumb { font-size:12px;color:#748190;margin-bottom:13px }
+    .heading { display:flex;align-items:flex-start;gap:18px }
+    h1 { font-size:24px;line-height:1.2;letter-spacing:-.5px;margin:0 0 6px }
+    .sub { color:var(--muted);font-size:13px }
+    .readonly { margin-left:auto;display:flex;gap:7px;align-items:center;border:1px solid #b9e0d2;background:#effaf6;color:#12644f;border-radius:20px;padding:6px 10px;font-size:11px;font-weight:650;white-space:nowrap }
+    .dot { width:7px;height:7px;background:#18a17a;border-radius:50% }
+    .prototype { margin:19px 0 18px;padding:9px 12px;border:1px solid #f1d7b1;background:#fff9ef;color:#88571e;border-radius:6px;font-size:11px }
+    .prototype strong { font-weight:700 }
+    .kpis { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0 }
+    .kpi { background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px 16px }
+    .kpi-label { color:var(--muted);font-size:11px }
+    .kpi-value { font-size:24px;font-weight:700;letter-spacing:-.6px;margin:4px 0 1px }
+    .kpi-foot { font-size:10px;color:#83909c }
+    .up { color:var(--green) }
+    .panel { background:#fff;border:1px solid var(--line);border-radius:8px }
+    .trend { display:grid;grid-template-columns:1.15fr 1fr;gap:24px;padding:16px 18px;margin-bottom:17px;align-items:center }
+    .panel-title { font-size:13px;font-weight:700 }
+    .panel-hint { font-size:10px;color:#7d8995;margin-top:2px }
+    .bars { height:58px;display:flex;align-items:end;gap:7px;padding:0 10px 2px;border-bottom:1px solid #dfe6ec }
+    .bar { flex:1;min-width:8px;background:#b8d9f1;border-radius:3px 3px 0 0;position:relative }
+    .bar:last-child { background:#1680ce }
+    .bar:hover::after { content:attr(data-tip);position:absolute;top:-19px;left:50%;transform:translateX(-50%);font-size:9px;white-space:nowrap;background:#243747;color:white;padding:2px 4px;border-radius:3px }
+    .ticks { display:flex;justify-content:space-between;color:#98a2ac;font-size:9px;padding:4px 10px 0 }
+    .trend-summary { border-left:1px solid var(--line);padding-left:22px;font-size:11px;color:var(--muted) }
+    .trend-summary b { color:var(--ink);font-size:13px }
+    .content-grid { display:grid;grid-template-columns:minmax(440px,1.55fr) minmax(275px,.8fr);gap:16px;align-items:start }
+    .list-panel { overflow:hidden }
+    .list-head { display:flex;align-items:center;padding:15px 17px 12px;gap:12px }
+    .list-head h2 { font-size:14px;margin:0 }
+    .count { color:#778491;font-size:11px }
+    .filters { display:flex;gap:6px;padding:0 17px 12px;flex-wrap:wrap }
+    .filter { border:1px solid var(--line);border-radius:15px;background:#fff;color:#5d6a77;padding:4px 9px;font-size:10px;cursor:pointer }
+    .filter.active { color:#0967ad;background:#eef7fd;border-color:#bedcf2;font-weight:650 }
+    .search { width:100%;padding:8px 10px;margin:0 17px 13px;width:calc(100% - 34px);border:1px solid var(--line);border-radius:6px;font-size:11px;outline:none }
+    .search:focus { border-color:#8bbfe5;box-shadow:0 0 0 2px #e6f3fc }
+    .signal { padding:14px 17px;border-top:1px solid #edf0f3;cursor:pointer;transition:background .12s }
+    .signal:hover,.signal.selected { background:#f7fbfe }
+    .signaltop { display:flex;align-items:center;gap:7px;margin-bottom:6px }
+    .rank { color:#8894a0;font-size:10px;font-weight:700;width:19px }
+    .tag { border-radius:3px;background:#edf3f7;color:#536575;padding:3px 6px;font-size:9px;font-weight:650 }
+    .tag.api { background:#e9f3ff;color:#2868a1 }
+    .tag.bulk { background:#f2edff;color:#674fa0 }
+    .tag.rbac { background:#fff3df;color:#956313 }
+    .tag.ui { background:#e8f6f0;color:#29775f }
+    .priority { margin-left:auto;color:#a75437;font-size:9px;font-weight:700;letter-spacing:.04em }
+    .signal h3 { margin:0 0 4px;font-size:13px;letter-spacing:-.1px }
+    .signal p { color:#5e6b78;margin:0;font-size:11px;line-height:1.5 }
+    .meta { display:flex;gap:10px;align-items:center;margin-top:9px;color:#82909d;font-size:9px;flex-wrap:wrap }
+    .metastrong { color:#526170;font-weight:650 }
+    .spark { margin-left:auto;color:#45916f;letter-spacing:2px;font-size:11px }
+    .detail { position:sticky;top:15px;padding:16px }
+    .detail h2 { font-size:15px;line-height:1.3;margin:9px 0 6px }
+    .detail .desc { color:#5e6b78;font-size:11px;margin:0 0 15px }
+    .detail-section { border-top:1px solid #edf0f3;padding:12px 0 }
+    .detail-section h4 { margin:0 0 7px;text-transform:uppercase;letter-spacing:.07em;font-size:9px;color:#8995a0 }
+    .metricrow { display:flex;justify-content:space-between;gap:10px;font-size:10px;padding:3px 0;color:#586674 }
+    .metricrow b { color:#263847;font-weight:650;text-align:right }
+    .quote { padding:10px;border-left:2px solid #7eb5dc;background:#f5faff;border-radius:0 5px 5px 0;color:#526271;font-size:10px;margin-top:8px }
+    .quote small { display:block;color:#81909d;margin-top:6px;font-size:9px }
+    .button { display:inline-block;border:1px solid #b7d5e9;color:#0967ad;border-radius:5px;background:#f3f9fd;padding:7px 10px;font-size:10px;font-weight:650;margin-top:4px }
+    .button.secondary { background:#fff;color:#586674;border-color:var(--line) }
+    .button.danger { color:#a34c4c;border-color:#ead0d0;background:#fffafa }
+    .jira-chip { border:1px solid #d8e5ee;background:#f5f9fc;color:#476578;border-radius:4px;padding:3px 6px;font-size:9px;font-weight:650 }
+    .jira-chip.unlinked { color:#87939e;background:#fafbfc;border-style:dashed }
+    .ticket-summary { padding:10px;border:1px solid var(--line);background:#fbfcfd;border-radius:6px;margin:7px 0;font-size:10px }
+    .ticket-key { color:#0967ad;font-weight:700 }
+    .ticket-title { color:#344555;margin-top:3px }
+    .ticket-state { color:#778491;font-size:9px;margin-top:4px }
+    .ticket-picker { margin-top:10px;padding:10px;border:1px solid #cfe0ec;background:#f8fbfd;border-radius:6px }
+    .ticket-picker label { display:block;font-size:10px;font-weight:650;margin-bottom:6px }
+    .ticket-search { width:100%;border:1px solid var(--line);border-radius:5px;padding:7px 8px;font-size:10px;outline:none }
+    .ticket-results { margin-top:6px;display:grid;gap:5px;max-height:190px;overflow:auto }
+    .ticket-result { text-align:left;border:1px solid var(--line);background:#fff;border-radius:5px;padding:7px;cursor:pointer }
+    .ticket-result:hover { border-color:#9bc6e2;background:#f3f9fd }
+    .ticket-result strong { color:#0967ad;font-size:9px }
+    .ticket-result span { display:block;font-size:10px;color:#455563;margin-top:2px }
+    .ticket-result small { display:block;font-size:9px;color:#84919c;margin-top:2px }
+    .ticket-note { font-size:9px;color:#7a8793;margin-top:7px;line-height:1.45 }
+    .explain { background:#f8fafb;border:1px solid var(--line);padding:10px;border-radius:6px;color:#687684;font-size:9px;line-height:1.5 }
+    .empty { padding:24px 17px;color:#778491;font-size:11px }
+    footer { text-align:center;color:#8995a0;font-size:10px;padding:22px }
+    @media(max-width:950px) { .layout{grid-template-columns:175px minmax(0,1fr)}main{padding:23px 20px}.content-grid{grid-template-columns:1fr}.detail{position:static}.trend{grid-template-columns:1fr}.trend-summary{border-left:0;border-top:1px solid var(--line);padding:10px 0 0} }
+    @media(max-width:650px) { .topbar{padding:0 15px}.product,.workspace{display:none}.layout{display:block}.layout > aside{display:none}main{padding:20px 14px}.heading{display:block}.readonly{display:inline-flex;margin-top:10px}.kpis{grid-template-columns:repeat(2,1fr);gap:8px}.kpi{padding:11px}.kpi-value{font-size:21px}.content-grid{display:block}.detail{margin-top:12px}.trend{gap:14px} }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><b>Juno</b> PM</div><div class="product">Product signals</div><div class="spacer"></div>
+    <div class="workspace">Webex Calling · Control Hub</div><div class="avatar">CJ</div>
+  </header>
+  <div class="layout">
+    <aside>
+      <div class="navlabel">Workspace</div>
+      <div class="nav"><span class="icon">◫</span>Overview</div>
+      <div class="nav active"><span class="icon">◉</span>Signal inbox</div>
+      <div class="nav"><span class="icon">▤</span>Saved themes</div>
+      <div class="nav"><span class="icon">◷</span>Space coverage</div>
+      <div class="navlabel" style="margin-top:20px">Scope</div>
+      <div class="nav"><span class="icon">⌄</span>Provisioning Layer</div>
+      <div class="sourcebox"><strong>Read-only sources</strong>Webex Spaces<br>12 spaces selected<br><span style="color:#178066">● Connected · messages only</span></div>
+    </aside>
+    <main>
+      <div class="crumb">Product signals &nbsp; / &nbsp; Webex Calling &nbsp; / &nbsp; Provisioning Layer</div>
+      <div class="heading"><div><h1>Provisioning Layer signals</h1><div class="sub">Issues, ideas, and requests surfaced from selected Webex Spaces.</div></div><div class="readonly"><span class="dot"></span>Read-only monitoring</div></div>
+      <div class="prototype"><strong>Lo-fi prototype · simulated data.</strong> Signals and Jira backlog items are fictional; linking is a local demo interaction, not connected to Webex or Jira.</div>
+      <section class="kpis">
+        <div class="kpi"><div class="kpi-label">Signals detected</div><div class="kpi-value">24</div><div class="kpi-foot">Last 30 days · 12 spaces</div></div>
+        <div class="kpi"><div class="kpi-label">Distinct conversations</div><div class="kpi-value">18</div><div class="kpi-foot">Grouped to reduce repeat-message inflation</div></div>
+        <div class="kpi"><div class="kpi-label">Needs a closer look</div><div class="kpi-value">6</div><div class="kpi-foot">Recent or repeated across spaces</div></div>
+        <div class="kpi"><div class="kpi-label">New this week</div><div class="kpi-value">+5</div><div class="kpi-foot"><span class="up">↑ 2</span> vs. prior week</div></div>
+      </section>
+      <section class="panel trend">
+        <div><div class="panel-title">Signal activity</div><div class="panel-hint">Distinct conversations by week · trailing 8 weeks</div><div class="bars" aria-label="Signal counts by week"><div class="bar" style="height:27%" data-tip="3 conversations"></div><div class="bar" style="height:42%" data-tip="5 conversations"></div><div class="bar" style="height:33%" data-tip="4 conversations"></div><div class="bar" style="height:58%" data-tip="7 conversations"></div><div class="bar" style="height:43%" data-tip="5 conversations"></div><div class="bar" style="height:74%" data-tip="9 conversations"></div><div class="bar" style="height:57%" data-tip="7 conversations"></div><div class="bar" style="height:91%" data-tip="11 conversations"></div></div><div class="ticks"><span>8 wks ago</span><span>6 wks</span><span>4 wks</span><span>2 wks</span><span>This week</span></div></div>
+        <div class="trend-summary"><b>Recent activity is rising</b><br>Volume is weighted by distinct conversations and recency. Older historical requests naturally lose priority over time.</div>
+      </section>
+      <div class="content-grid">
+        <section class="panel list-panel">
+          <div class="list-head"><h2>Priority signals</h2><span class="count">Sorted by attention score</span><span class="spacer"></span><span class="count">24 total</span></div>
+          <div class="filters"><button class="filter active" data-filter="all">All areas</button><button class="filter" data-filter="api">Public APIs</button><button class="filter" data-filter="bulk">Bulk tooling</button><button class="filter" data-filter="ui">User interface</button><button class="filter" data-filter="rbac">Role access</button></div>
+          <input id="search" class="search" type="search" placeholder="Search signals, spaces, or keywords…" aria-label="Search signals">
+          <div id="signals">
+            <article class="signal selected" data-area="api" data-ticket="CALL-DEMO-101" data-search="api webhook user provisioning sync lifecycle admin space alpha">
+              <div class="signaltop"><span class="rank">01</span><span class="tag api">Public APIs</span><span class="priority">HIGH ATTENTION</span></div>
+              <h3>Provisioning API lacks change events for user lifecycle</h3><p>Admins describe polling as fragile when users are added or updated in bulk; requests ask for webhook or event support.</p>
+              <div class="meta"><span class="metastrong">9 conversations</span><span>·</span><span>4 spaces</span><span>·</span><span>Active 2 days ago</span><span class="jira-chip">Jira: CALL-DEMO-101</span><span class="spark">▂▄▆█</span></div>
+            </article>
+            <article class="signal" data-area="bulk" data-ticket="CALL-DEMO-204" data-search="bulk csv errors validation partial success retry export space bravo charlie">
+              <div class="signaltop"><span class="rank">02</span><span class="tag bulk">Bulk tooling</span><span class="priority" style="color:#a76a24">HIGH ATTENTION</span></div>
+              <h3>Bulk user upload hides row-level validation errors</h3><p>Teams want a downloadable failure report and a way to retry only invalid rows instead of rerunning a full import.</p>
+              <div class="meta"><span class="metastrong">7 conversations</span><span>·</span><span>3 spaces</span><span>·</span><span>Active yesterday</span><span class="jira-chip">Jira: CALL-DEMO-204</span><span class="spark">▃▃▅█</span></div>
+            </article>
+            <article class="signal" data-area="rbac" data-ticket="CALL-DEMO-318" data-search="rbac role permission scope read only provisioning admin separation space delta">
+              <div class="signaltop"><span class="rank">03</span><span class="tag rbac">Role access</span><span class="priority" style="color:#9c762d">WATCH</span></div>
+              <h3>Provisioning tasks need a narrower admin role</h3><p>Requests distinguish routine user provisioning from broader Control Hub administration permissions.</p>
+              <div class="meta"><span class="metastrong">5 conversations</span><span>·</span><span>3 spaces</span><span>·</span><span>Active 5 days ago</span><span class="jira-chip">Jira: CALL-DEMO-318</span><span class="spark">▂▃▄▅</span></div>
+            </article>
+            <article class="signal" data-area="ui" data-ticket="" data-search="interface ui user experience status sync provisioning pending confusing space echo">
+              <div class="signaltop"><span class="rank">04</span><span class="tag ui">User interface</span><span class="priority" style="color:#75828e">EMERGING</span></div>
+              <h3>Sync status is hard to find after provisioning changes</h3><p>Admins ask for a clear last-run time and a visible status when external directory changes are still processing.</p>
+              <div class="meta"><span class="metastrong">3 conversations</span><span>·</span><span>2 spaces</span><span>·</span><span>Active 8 days ago</span><span class="jira-chip unlinked">No Jira link</span><span class="spark">▂▃▃▄</span></div>
+            </article>
+            <article class="signal" data-area="api" data-ticket="" data-search="api legacy deactivate endpoint retirement historical stale space foxtrot">
+              <div class="signaltop"><span class="rank">05</span><span class="tag api">Public APIs</span><span class="priority" style="color:#83909c">LOWER RECENCY</span></div>
+              <h3>Older request for a legacy deactivation endpoint</h3><p>Single-space mention with no follow-up; likely historical, retained for context rather than current escalation.</p>
+              <div class="meta"><span class="metastrong">2 conversations</span><span>·</span><span>1 space</span><span>·</span><span>Last seen 74 days ago</span><span class="jira-chip unlinked">No Jira link</span><span class="spark" style="color:#aab4bd">▁▁▁▂</span></div>
+            </article>
+          </div>
+          <div id="empty" class="empty" hidden>No matching signals. Try another filter or search term.</div>
+        </section>
+        <aside class="panel detail" id="detail">
+          <div class="panel-title">Signal details</div>
+          <span id="detail-category" class="tag api">Public APIs</span>
+          <h2 id="detail-title">Provisioning API lacks change events for user lifecycle</h2>
+          <p class="desc">A recurring request for push-based notifications when user provisioning changes occur.</p>
+          <div class="detail-section"><h4>Why this is prioritized</h4><div class="metricrow"><span>Conversation count</span><b>9 across 4 spaces</b></div><div class="metricrow"><span>Most recent mention</span><b>2 days ago</b></div><div class="metricrow"><span>Recent trend</span><b style="color:#147d64">Increasing</b></div></div>
+          <div class="detail-section"><h4>Representative evidence</h4><div class="quote">“We currently poll for changes, and it’s easy to miss a user update during a busy onboarding window.”<small>Simulated message · Admin Integrations · 2 days ago</small></div><div class="quote">“An event when a user is provisioned would let us remove a lot of custom polling.”<small>Simulated message · Calling API Partners · 11 days ago</small></div></div>
+          <div class="detail-section"><h4>Evidence summary</h4><div class="metricrow"><span>Spaces represented</span><b>4</b></div><div class="metricrow"><span>Distinct threads</span><b>9</b></div><div class="metricrow"><span>Earliest in current window</span><b>18 days ago</b></div><button class="button" type="button">Open source conversations ↗</button></div>
+          <div class="detail-section"><h4>Existing Jira backlog item</h4><div id="ticket-summary" class="ticket-summary"></div><button id="open-ticket-picker" class="button" type="button">Change linked ticket</button><button id="unlink-ticket" class="button secondary" type="button">Unlink</button>
+            <div id="ticket-picker" class="ticket-picker" hidden><label for="ticket-search">Find an existing Jira ticket</label><input id="ticket-search" class="ticket-search" type="search" placeholder="Search ticket key or title…"><div id="ticket-results" class="ticket-results"></div><div class="ticket-note">Simulated backlog options for this prototype. Selecting one updates the local signal mapping only.</div></div>
+          </div>
+          <div class="detail-section"><h4>Scoring note</h4><div class="explain">Attention combines distinct-thread frequency, recency, and direction of activity. It is a triage aid; a high score is not a validated product decision.</div></div>
+        </aside>
+      </div>
+      <footer>Prototype for product discovery · Webex Space content is read only · No messages are posted</footer>
+    </main>
+  </div>
+  <script>
+    const filters = [...document.querySelectorAll('.filter')];
+    const cards = [...document.querySelectorAll('.signal')];
+    const search = document.getElementById('search');
+    const empty = document.getElementById('empty');
+    const ticketSummary = document.getElementById('ticket-summary');
+    const ticketPicker = document.getElementById('ticket-picker');
+    const ticketSearch = document.getElementById('ticket-search');
+    const ticketResults = document.getElementById('ticket-results');
+    const openTicketPicker = document.getElementById('open-ticket-picker');
+    const unlinkTicket = document.getElementById('unlink-ticket');
+    const backlogTickets = [
+      { key:'CALL-DEMO-101', title:'Add provisioning user lifecycle event notifications', status:'Backlog · Simulated' },
+      { key:'CALL-DEMO-204', title:'Provide row-level errors and retry for bulk user upload', status:'Backlog · Simulated' },
+      { key:'CALL-DEMO-318', title:'Add granular administrator role for provisioning', status:'Backlog · Simulated' },
+      { key:'CALL-DEMO-427', title:'Show directory sync status and last run in Control Hub', status:'Backlog · Simulated' },
+      { key:'CALL-DEMO-509', title:'Support legacy user deactivation endpoint', status:'Backlog · Simulated' }
+    ];
+    let activeCard = cards[0];
+    let area = 'all';
+    function refreshTicketBadges() {
+      cards.forEach(card => {
+        const badge = card.querySelector('.jira-chip');
+        const ticket = backlogTickets.find(item => item.key === card.dataset.ticket);
+        badge.textContent = ticket ? `Jira: ${ticket.key}` : 'No Jira link';
+        badge.classList.toggle('unlinked', !ticket);
+      });
+    }
+    function renderTicketSummary() {
+      const ticket = backlogTickets.find(item => item.key === activeCard.dataset.ticket);
+      ticketSummary.innerHTML = ticket
+        ? `<div class="ticket-key">${ticket.key}</div><div class="ticket-title">${ticket.title}</div><div class="ticket-state">${ticket.status}</div>`
+        : '<span style="color:#7b8792">No existing Jira ticket linked to this signal yet.</span>';
+      openTicketPicker.textContent = ticket ? 'Change linked ticket' : 'Link existing Jira ticket';
+      unlinkTicket.hidden = !ticket;
+      refreshTicketBadges();
+    }
+    function renderTicketResults() {
+      const q = ticketSearch.value.trim().toLowerCase();
+      const matches = backlogTickets.filter(ticket => `${ticket.key} ${ticket.title}`.toLowerCase().includes(q));
+      ticketResults.replaceChildren();
+      if (!matches.length) {
+        const note = document.createElement('div'); note.className = 'ticket-note'; note.textContent = 'No matching backlog tickets in this demo.'; ticketResults.append(note); return;
+      }
+      matches.forEach(ticket => {
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'ticket-result';
+        const key = document.createElement('strong'); key.textContent = ticket.key;
+        const title = document.createElement('span'); title.textContent = ticket.title;
+        const status = document.createElement('small'); status.textContent = ticket.status;
+        button.append(key, title, status);
+        button.addEventListener('click', () => {
+          activeCard.dataset.ticket = ticket.key; renderTicketSummary(); ticketPicker.hidden = true;
+        });
+        ticketResults.append(button);
+      });
+    }
+    function applyFilters() {
+      const q = search.value.trim().toLowerCase(); let visible = 0;
+      cards.forEach(card => {
+        const match = (area === 'all' || card.dataset.area === area) && card.dataset.search.includes(q);
+        card.hidden = !match; if (match) visible++;
+      });
+      empty.hidden = visible !== 0;
+    }
+    filters.forEach(button => button.addEventListener('click', () => {
+      filters.forEach(item => item.classList.toggle('active', item === button)); area = button.dataset.filter; applyFilters();
+    }));
+    search.addEventListener('input', applyFilters);
+    cards.forEach(card => card.addEventListener('click', () => {
+      cards.forEach(item => item.classList.toggle('selected', item === card));
+      activeCard = card;
+      document.getElementById('detail-title').textContent = card.querySelector('h3').textContent;
+      const category = document.getElementById('detail-category');
+      category.className = `tag ${card.dataset.area}`;
+      category.textContent = card.querySelector('.tag').textContent;
+      renderTicketSummary(); ticketPicker.hidden = true;
+    }));
+    openTicketPicker.addEventListener('click', () => { ticketPicker.hidden = !ticketPicker.hidden; if (!ticketPicker.hidden) { ticketSearch.value = ''; renderTicketResults(); ticketSearch.focus(); } });
+    ticketSearch.addEventListener('input', renderTicketResults);
+    unlinkTicket.addEventListener('click', () => { activeCard.dataset.ticket = ''; renderTicketSummary(); });
+    renderTicketSummary();
+  </script>
+</body>
+</html>
